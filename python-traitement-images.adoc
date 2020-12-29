@@ -1,0 +1,603 @@
+= Traitement d'images matricielles en Python
+:author: Thierry Vaira
+:email: tvaira@free.fr
+:revnumber: v0.1
+:revdate: 24/12/2020
+:revremark: 
+:sectnums:
+:toc: left
+:toclevels: 4
+:toc-title: Sommaire
+:description: Traitement d'images en Python
+:keywords: traitement images python
+:imagesdir: ./images/
+:source-highlighter: highlightjs
+:highlightjs-theme: rainbow
+:stem:
+
+ifdef::backend-html5[]
+++++
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+++++
+:html:
+endif::[]
+
+:icons: font
+
+:home: http://tvaira.free.fr/
+
+L'objectif est de présenter une application peu connue des matrices aux enseignants de lycées : le traitement des images numériques. (Extrait de l'article http://blog.kleinproject.org/?p=719&lang=fr[Matrices et Images Numériques] d'http://blog.kleinproject.org/?author=20&lang=fr[Antoine Nectoux])
+
+== Python
+
+=== Présentation
+
+https://fr.wikipedia.org/wiki/Python_(langage)[*Python*] est un langage de programmation interprété.
+
+image:python-logo.png[]
+
+Les programmes Python sont des scripts donc des fichiers textes qui contiennent le code source. Ils ont besoin de l'interpréteur Python pour s'exécuter.
+
+Pour programmer en Python, on a besoin des ressources suivantes :
+
+* un interpréteur Python installé sur sa machine
+* un éditeur de texte ou un EDI pour produire des programmes Python
+
+Liens :
+
+- https://www.python.org/[Site officiel]
+- https://docs.python.org/fr/3/contents.html[Documentation Python3]
+- http://tvaira.free.fr/dev/python/cours-python.html[Les bases du langage Python]
+- http://tvaira.free.fr/dev/python/exercices-python.html[Exercices]
+
+=== Installation sous Windows
+
+Lien : https://www.python.org/downloads/[Télécharger Python3]
+
+Exécuter l'installateur :
+
+image:install-python-1.png[]
+
+****
+`pip` est un utilitaire qui permettra d'installer des modules Python
+
+`tkinter` est une bibliothèque permettant de créer des interfaces graphiques utilisateur (GUI en Anglais)
+
+Il est intéressant d'ajouter le chemin complet vers l'interpréteur Python dans la variable `PATH`. La commandes `python` sera alors accessible à partir de l'interpréteur de commandes (`cmd.exe`)
+****
+
+image:install-python-2.png[]
+
+On démarre l'installation ...
+
+image:install-python-3.png[]
+
+Vérifions :
+
+image:python-1.png[]
+
+[TIP]
+====
+Il est possible de programmer directement dans le _shell_ Python.
+====
+
+=== Bibliothèque PIL (_Python Imaging Library_)
+
+On installe maintenant le _package_ Pillow utilisé dans les exemples de traitement d'images ci-dessous. Pour cela, le plus simple est de démarrer l'interpréteur de commandes `cmd.exe` puis de saisir la commande `pip install Pillow` :
+
+image:python-2.png[]
+
+PIL (_Python Imaging Library_) est une bibliothèque de traitement d'image (cf. https://pillow.readthedocs.io/en/stable/[Documentation]).
+
+== Activités de traitement d'images
+
+Les activités présentés ici ont pour objectif de montrer l'utilisation des matrices dans le traitement d'images numériques.
+
+En effet, une image numérique (au niveau d'un périphérique comme l'écran) est une *matrice de pixels* (_px_). On parle d'image matricielle.
+
+Pour une *image binaire* (ou image en noir et blanc), les éléments de l'image sont représentés par des pixels noirs (des `0` par exemple) et des pixels blancs (donc des `1`).
+
+Pour une image en couleurs, chaque pixel est associée une couleur, usuellement décomposée en trois composantes primaires par synthèse additive : https://fr.wikipedia.org/wiki/Rouge_vert_bleu[rouge vert bleu] (RVB ou *RGB* en anglais).
+
+Un pixel est donc codé sur un ou plusieurs bits, par exemple :
+
+- 1 bit : asciimath:[2^1 = 2] couleurs (noir et blanc par exemple)
+- 8 bits : asciimath:[2^8 = 256] couleurs (256 https://fr.wikipedia.org/wiki/Niveau_de_gris[niveaux de gris] de `0` pour le noir à `255` pour le blanc)
+- 24 bits : asciimath:[2^24 = 16 777 216] couleurs (3 x 8 bits pour les composantes Rouge Vert Bleu)
+
+Par exemple, la petite image de *Félix le Chat* peut être représentée par une matrice de taille asciimath:[35 \times 35] :
+
+.La matrice correspondant à Felix le Cat
+image:sample-matrix.png[]
+
+Lire l'article d'Antoine Nectoux : http://blog.kleinproject.org/?p=719&lang=fr
+
+[NOTE]
+====
+Les fichiers peuvent enregistrer l'image sous forme d'un tableau des valeurs représentant les pixels (format https://fr.wikipedia.org/wiki/Windows_bitmap[BMP] par exemple), éventuellement comprimé (formats https://fr.wikipedia.org/wiki/Portable_Network_Graphics[PNG] ou https://fr.wikipedia.org/wiki/JPEG[JPEG]), ou bien sous forme vectorielle (format https://fr.wikipedia.org/wiki/Scalable_Vector_Graphics[SVG] par exemple), c'est-à-dire sous forme d'instructions permettant de reconstituer une image matricielle. Dans ce cas, la couleur peut être également enregistrée sous forme vectorielle, avec comme paramètres (https://fr.wikipedia.org/wiki/Teinte_saturation_lumi%C3%A8re[teinte, saturation, lumière]).
+====
+
+=== Activité n°1 : manipuler une image
+
+Ce premier programme effectue les opérations basiques suivantes :
+
+- afficher le format, la taille et le mode d'une image
+- afficher les dimensions d'une image
+- afficher une image
+- calculer et afficher le nombre de pixels d'une image
+- modifier la taille d'une image et en obtient une nouvelle
+- afficher la résolution et la taille de l'écran
+- afficher la résolution et la taille de l'image en ppp (en pixels par pouce) ou ppi (_pixel per inch_)
+
+[NOTE]
+====
+Le programme Python ci-dessous est commenté afin d'être certain d'utiliser le bon vocabulaire lié à la programmation Python.
+====
+
+[source,python]
+----
+# coding: utf-8
+
+# Python3 pour Windows : https://www.python.org/downloads/
+# PIL (Python Imaging Library) (Pillow fork)
+# Installation : pip install Pillow
+# Documentation : https://pillow.readthedocs.io/en/stable/
+
+print("ACTIVITÉ 1")
+
+# PIL est une bibliothèque de traitement d'image
+import PIL;
+print("PIL version ", PIL.__version__)
+
+# on importe le module Image de la bibliothèque PIL
+# le module Image fournit une classe du même nom qui sera utilisée pour représenter une image.
+from PIL import Image
+
+# cf. https://fr.wikipedia.org/wiki/Lenna
+
+# Image est une classe (c'est un type Image)
+# img est un objet de la classe Image
+# la création d'un objet se nomme l'instanciation
+# open() est une fonction (méthode) de la classe Image qui permet de charger un fichier image
+img = Image.open("./images/lena.jpg");
+# format, size et mode sont des données (attributs) de la classe Image
+print(img.format, img.size, img.mode)
+# exemple : les modes courants sont "L" (luminance) pour les images en niveaux de gris, "RGB" pour les images en couleurs vraies et "CMYK" pour les images pour l'imprimerie (quadrichromie)
+print("Fichier :", img.filename)
+
+print("2. Calculez le nombre de pixels de cette image.")
+
+# Affichage des dimensions de l'image
+print("L =", img.width, "x H =", img.height)
+# Calcul et Affichage du nombre de pixels de l'image
+print("Nombre de pixels =", (img.width*img.height) , "pixels")
+
+# Affichage de l'image
+img.show()
+
+# resize() est une fonction (méthode) de la classe Image qui permet de modifier la taille d'une image et d'en obtenir une nouvelle
+# im2 est un objet de la classe Image
+im2 = img.resize((228,192))
+# save() est une fonction (méthode) de la classe Image qui sauvegarder l'image dans un fichier (ici, l'extension précisera le format de l'image)
+im2.save("./images/lena_228x192.png")
+print(im2.format, im2.size, im2.mode)
+print("Nombre de pixels =", "L =", im2.width, "x H =", im2.height, "=", (im2.width*im2.height) , "pixels")
+im2.show()
+
+# size est un tuple (les tuples sont des séquences qu'on ne pourra plus modifier)
+size = (144,96) = les parenthèses ne sont pas obligatoires
+width, height = size
+print(size, width, height)
+
+im3 = img.resize(size)
+im3.save("./images/lena_144x96.png")
+print(im3.format, im3.size, im3.mode)
+print("Nombre de pixels =", "L =", im3.width, "x H =", im3.height, "=", (im3.width*im3.height) , "pixels")
+im3.show()
+
+#import Tkinter as tk = en python 2
+import tkinter as tk = en python 3
+ecran = tk.Tk()
+#print(ecran.winfo_screen()) = nom de l'écran
+
+print("1. Calculez la résolution de l'écran en pixels par centimètre, puis en ppp.")
+
+# Résolution = Nombre de pixels en largeur / Largeur
+w, h = ecran.winfo_screenwidth(), ecran.winfo_screenheight() 
+print("Ecran = %s pixels x %s pixels" % (w, h))
+
+# Taille de l'écran
+print("Ecran = %s mm x %s mm" % (ecran.winfo_screenmmwidth(), ecran.winfo_screenmmheight()))
+print("Ecran = %s cm x %s cm" % (ecran.winfo_screenmmwidth()/10, ecran.winfo_screenmmheight()/10))
+
+# Résolution (en pixels par cm)
+ppc_w = (w / (ecran.winfo_screenmmwidth()/10))
+ppc_h = (h / (ecran.winfo_screenmmheight()/10))
+print("Résolution = %.2f x %.2f pixels par cm" % (ppc_w, ppc_h))
+
+# Résolution ppp (en pixels par pouce) ou ppi (pixel per inch)
+ppi_w = (w / (ecran.winfo_screenmmwidth()/10)) * 2.54
+ppi_h = (h / (ecran.winfo_screenmmheight()/10)) * 2.54
+print("Résolution = %.2f x %.2f ppp (pixels par pouce)" % (ppi_w, ppi_h))
+
+print("2. Calculez pour l'image Femme_288x192.png la taille exacte en centimètres qui doit s'afficher à l'écran de l'ordinateur.")
+
+print("Taille : L =", im2.width, "pixels x H =", im2.height, "pixels")
+print("Taille : L = %.2f" % (im2.width/ppc_w), "cm x H = %.2f" % (im2.height/ppc_h), "cm")
+
+# Bonus :
+depth = ecran.winfo_screendepth() = retourne le nombre de bits par pixel
+print("Nombre de bits par pixel =", depth) = RGB 24 bits = R8 + G8 + B8
+
+# cf. le format BMP (sans compression)
+print("Taille : L =", (im2.width*depth), "bits x H =", (im2.height*depth), "bits", "=", ((im2.width*im2.height*depth)), "bits")
+print("Taille : L =", (im2.width*depth), "bits x H =", (im2.height*depth), "bits", "=", ((im2.width*im2.height*depth))/8, "octets")
+# https://fr.wikipedia.org/wiki/Préfixe_binaire
+print("Taille :", (((im2.width*im2.height*depth))/8)/1024, " Kio (kibi)")
+print("Taille :", (((im2.width*im2.height*depth))/8)/1000, " ko (kilo)")
+#print("Taille :", (((im2.width*im2.height*depth))/8)/1024/1024, " Mio (mebi)")
+#print("Taille :", (((im2.width*im2.height*depth))/8)/1000/1000, " Mo (mega)")
+----
+
+L'image utilisée ici est célèbre : https://fr.wikipedia.org/wiki/Lenna[Lenna]
+
+image:lena_228x192.png[]
+
+Il est possible d'exécuter ce programme directement dans l'interpréteur de commandes `cmd.exe` :
+
+image:python-3.png[]
+
+Ou à partir de l'IDE fourni par l'installateur Python en cliquant sur `Run` :
+
+image:python-4.png[]
+
+Quelques commandes sous GNU/Linux qui permettent d'obtenir la taille en octets (suivant le préfixe utilisé) :
+
+```
+$ ls -l images/lena_228x192.data
+-rw-rw-r-- 1 tv tv 131328 nov.  24 09:23 images/lena_228x192.bmp
+
+$ ls -lh images/lena_228x192.data 
+-rw-rw-r-- 1 tv tv 129K nov.  24 09:23 images/lena_228x192.bmp
+
+$ ls -l --si images/lena_228x192.data 
+-rw-rw-r-- 1 tv tv 132k nov.  24 09:23 images/lena_228x192.bmp
+```
+
+Lien : https://fr.wikipedia.org/wiki/Préfixe_binaire[kibi vs kilo]
+
+=== Activité n°2 : binariser une image
+
+En traitement d'images, la https://fr.wikipedia.org/wiki/Binarisation[binarisation] est une opération qui produit une image ayant deux classes de pixels, on parle alors d'une *image binaire*. En général, les pixels sont représentés par des pixels noirs et des pixels blancs dans une image binaire. Il existe deux types de technique de binarisation :
+
+- https://fr.wikipedia.org/wiki/Seuillage_d%27image[Binarisation par seuillage]
+- Binarisation par segmentation
+
+[NOTE]
+====
+La différence entre la binarisation et la segmentation est que la binarisation produit toujours deux classes alors que la segmentation peut en produire plusieurs. Cependant, ces deux termes sont souvent confondus par abus de langage.
+====
+
+Le https://fr.wikipedia.org/wiki/Seuillage_d%27image[seuillage d'image] est une technique simple de binarisation d'image, elle consiste à transformer une image en niveau de gris en une image dont les valeurs de pixels ne peuvent avoir que la valeur 1 ou 0. On parle alors d'une image binaire ou *image en noir et blanc*.
+
+.Principe
+****
+Le seuillage d'image remplace un à un les pixels d'une image à l'aide d'une valeur seuil fixée (ici `128`). Ainsi, si un pixel a une valeur supérieure ou égale au seuil (par exemple 253), il prendra la valeur `255` (blanc), et si sa valeur est inférieure (par exemple 8), il prendra la valeur `0` (noir).
+****
+
+On va utiliser deux images au format https://fr.wikipedia.org/wiki/Portable_Network_Graphics[PNG] :
+
+[TIP]
+====
+Dans la bibliothèque PIL (_Python Imaging Library_), le mode d'une image est une chaîne qui définit le type et la profondeur d'un pixel dans l'image : https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes[les différents modes] (`'RGB'`, `'P'`, ...).
+====
+
+.Felix le chat (PNG (35, 35) RGB -> 3 x 8-bits pixels) cette image est "presque binaire"
+image:felix-the-cat.png[]
+
+Dans ce format `'RGB'`, le pixel est codé sur 24 bits soit 3 octets définissant les composantes Rouge Vert Bleu. La valeur de chaque couleur va de `0` à `255`. En Python, la variable pixel sera alors un _tuple_ (ici une séquence de 3 entiers). Dans ce cas, on transformera un pixel RGB en niveaux de gris en calculant la moyenne des 3 composantes que l'on conservera sous la forme d'un entier (`int`).
+
+.Felix le chat (PNG (220, 228) P -> 8-bits pixels)
+image:felix-le-chat.png[]
+
+Dans ce format `'P'`, le pixel est simplement codé sur 8 bits soit 256 https://fr.wikipedia.org/wiki/Niveau_de_gris[niveaux de gris] de `0` pour le noir à `255` pour le blanc. En Python, la variable pixel sera tout simplement un entier (`int`).
+
+.Tuple en Python
+****
+Ce programme manipule des https://docs.python.org/fr/3/library/stdtypes.html#tuples[tuples]. Les https://docs.python.org/fr/3/library/stdtypes.html#tuples[tuples] sont des séquences immuables (qui ne peuvent être modifiées), généralement utilisées pour stocker des collections de données hétérogènes.
+
+Dans l'exemple ci-dessus, la variable `p` est un tuple : `p = (255,255,255) # un pixel blanc`
+****
+
+[source,python]
+----
+include::activite2/activite2.py[]
+----
+
+On obtient :
+
+.Felix le chat "binarisé"
+image:felix-le-chat-nouveau.png[]
+
+----
+ACTIVITÉ 2
+PIL version  5.1.0
+PNG (35, 35) RGB
+Fichier : ./images/felix-the-cat-nb.png
+L = 35 x H = 35
+Nombre de pixels = 1225 pixels
+Affiche les valeurs des pixels de l'image d'origine
+255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255   8 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 
+255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255   0   0   0   0 255 255 255   5 255 255 255 255 255 255 255 255 255 255 
+255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255   0   4   0   5   0   2 255   6   0 255 255 255 255 255 255 255 255 255 255 
+255 255 255 255 255 255 255 255 255 255 255 255 255 255   0   0   4   4   0   0   5   1   0   0   1 255 255 255 255 255 255 255 255 255 255 
+...
+Affiche les pixels en noir (0) ou blanc (1)
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 0 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 0 0 0 1 1 1 1 1 1 
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 1 1 1 1 1 
+1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 1 1 1 1 
+1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 1 1 1 1 1 0 0 1 1 1 
+1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 0 0 0 0 1 0 0 1 1 1 1 1 1 0 0 1 1 
+1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 0 0 1 0 0 0 1 1 1 1 1 1 0 1 1 
+1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 1 1 1 1 1 1 0 0 1 
+1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 1 1 1 1 1 0 1 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 1 1 1 0 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 0 0 0 0 0 1 1 0 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 1 0 1 0 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 1 1 0 0 1 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 0 0 1 1 0 0 1 1 1 0 1 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 0 1 1 0 0 1 1 1 0 1 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 1 1 1 1 0 0 1 1 0 1 0 
+1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 1 1 1 1 0 0 1 1 0 1 0 
+1 1 1 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 0 0 0 1 0 0 0 
+1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 0 1 1 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 0 0 0 1 1 0 0 0 
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 1 0 0 0 1 
+1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 0 0 0 1 1 1 0 0 0 0 0 0 0 1 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 1 1 0 0 0 0 1 0 1 1 
+1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 1 0 0 0 1 0 0 1 1 
+1 1 1 1 1 0 0 0 0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 0 0 1 0 0 0 1 0 0 1 1 1 
+1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 0 1 0 1 1 0 0 1 1 1 1 
+1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 0 1 1 0 0 0 0 0 0 1 1 0 0 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 0 1 0 0 1 0 0 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 1 1 0 1 0 0 0 0 0 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1
+Affiche les valeurs des pixels de la nouvelle image
+255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255   0 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 
+255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255   0   0   0   0 255 255 255   0 255 255 255 255 255 255 255 255 255 255 
+255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255   0   0   0   0   0   0 255   0   0 255 255 255 255 255 255 255 255 255 255 
+255 255 255 255 255 255 255 255 255 255 255 255 255 255   0   0   0   0   0   0   0   0   0   0   0 255 255 255 255 255 255 255 255 255 255
+...
+----
+
+=== Activité n°3 : traitement d'images matricielles
+
+Python n'a pas de type spécifique pour les matrices. On peut utiliser le _package_ Python https://fr.wikipedia.org/wiki/NumPy[NumPy] (https://www.numpy.org/) qui permet de manipuler des matrices ou tableaux multidimensionnels ainsi que des fonctions mathématiques pour le calcul scientifique. 
+
+Pré-requis : https://developpement-informatique.com/article/229/les-matrices-en-python[Les matrices en Python]
+
+==== https://fr.wikipedia.org/wiki/Matrice_transpos%C3%A9e[Matrice transposée]
+
+On reprend l'image suivante :
+
+.Felix le chat
+image:felix-the-cat-nb-nouveau.png[]
+
+[source,python]
+----
+include::activite3/activite3a.py[]
+----
+
+On obtient :
+
+.Felix le chat "transposé"
+image:felix-the-cat-nb-nouveau-transpose.png[]
+
+----
+ACTIVITÉ 3a
+PIL version  5.1.0
+PNG (35, 35) RGB
+Fichier : ./images/felix-the-cat-nb-nouveau.png
+L = 35 x H = 35
+35 x 35
+2 dimensions
+
+1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 0 0 1 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 0 0 1 1 1 1 
+1 1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 0 0 1 1 1 
+1 1 1 1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 1 1 1 
+1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 0 1 1 
+1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 1 0 0 1 
+1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 0 1 1 1 0 0 0 1 0 1 
+1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 0 1 1 1 0 0 0 1 0 0 
+1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 0 0 1 1 0 0 0 1 0 0 
+1 1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 0 0 1 1 0 0 0 1 0 0 
+1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 0 0 1 1 1 0 0 1 1 0 
+1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 1 1 1 0 0 0 1 1 1 1 1 1 0 
+0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 0 1 1 1 1 1 1 0 
+1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 0 0 0 0 0 1 0 0 
+1 1 0 0 0 0 0 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 1 0 0 0 0 0 0 0 1 0 
+1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 0 0 1 0 0 
+1 1 0 0 0 0 1 1 1 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 
+1 0 0 0 0 0 1 1 1 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 
+1 1 1 1 0 0 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 0 1 
+1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 0 0 1 
+1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 0 0 0 0 0 0 1 1 0 1 1 
+1 1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 1 
+1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 1 0 0 1 1 1 
+1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 1 1 1 1 1 1 0 1 1 1 0 0 1 0 0 1 1 1 1 
+1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 0 1 1 1 1 1 1 1 0 0 1 0 0 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 
+
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 0 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 0 0 0 1 1 1 1 1 1 
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 1 1 1 1 1 
+1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 1 1 1 1 
+1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 1 1 1 1 1 0 0 1 1 1 
+1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 0 0 0 0 1 0 0 1 1 1 1 1 1 0 0 1 1 
+1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 0 0 1 0 0 0 1 1 1 1 1 1 0 1 1 
+1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 1 1 1 1 1 1 0 0 1 
+1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 1 1 1 1 1 0 1 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 1 1 1 0 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 0 0 0 0 0 1 1 0 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 1 0 1 0 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 1 1 0 0 1 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 0 0 1 1 0 0 1 1 1 0 1 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 0 1 1 0 0 1 1 1 0 1 0 
+1 1 1 1 1 0 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 1 1 1 1 0 0 1 1 0 1 0 
+1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 1 1 1 1 0 0 1 1 0 1 0 
+1 1 1 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 0 0 0 1 0 0 0 
+1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 0 1 1 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 0 0 0 1 1 0 0 0 
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 1 0 0 0 1 
+1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 1 1 0 0 0 1 1 1 0 0 0 0 0 0 0 1 
+1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 1 1 0 0 0 0 1 0 1 1 
+1 1 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 1 0 0 0 1 0 0 1 1 
+1 1 1 1 1 0 0 0 0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 0 0 1 0 0 0 1 0 0 1 1 1 
+1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 0 1 0 1 1 0 0 1 1 1 1 
+1 1 1 1 1 1 1 1 1 0 0 1 1 0 0 0 0 0 1 1 0 0 0 0 0 0 1 1 0 0 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 0 1 0 0 1 0 0 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 1 1 0 1 0 0 0 0 0 1 1 1 1 1 1 1 1 
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 
+----
+
+==== Symétrie et rotation
+
+D'autres opérations peuvent être réalisées :
+
+.Symétrie horizontale
+image:felix-the-cat-nb-nouveau-symetrie-horizontale.png[]
+
+.Symétrie verticale
+image:felix-the-cat-nb-nouveau-symetrie-verticale.png[]
+
+.Rotation
+image:felix-the-cat-nb-nouveau-rotation.png[]
+
+[source,python]
+----
+include::activite3/activite3b.py[tag=snippet-symetrie-rotation,indent=0]
+----
+
+==== Filtres de couleur
+
+Un filtre coloré transmet ("laisse passer") certaines lumières colorées et absorbe les autres.
+
+La couleur d'un filtre est déterminée par la ou les lumières colorée(s) qu'il transmet. Un filtre de https://fr.wikipedia.org/wiki/Couleur_primaire[couleur primaire] ne transmet que la lumière de cette couleur (https://fr.wikipedia.org/wiki/Rouge_jaune_bleu[rouge jaune bleu]) :
+
+- un filtre jaune transmet les lumières verte et rouge et absorbe la lumière bleue.
+- un filtre magenta transmet les lumières bleue et rouge et absorbe la lumière verte.
+- un filtre cyan (bleu) transmet les lumières verte et bleue et absorbe la lumière rouge.
+
+[NOTE]
+====
+La https://fr.wikipedia.org/wiki/Synth%C3%A8se_soustractive[synthèse soustractive] des couleurs est le procédé consistant à combiner l'absorption d'au moins trois colorants pour obtenir les nuances d'une gamme.
+
+On emploie l'adjectif soustractive par opposition à la synthèse additive. Ce terme est cependant trompeur, car les primaires n'effectuent pas, sur la lumière de l'éclairant, une soustraction, mais une multiplication, différente pour chaque partie du spectre, par un nombre compris entre 0 et 1. 
+====
+
+[source,python]
+----
+include::activite3/activite3c.py[]
+----
+
+.Image https://fr.wikipedia.org/wiki/Pop_art["Pop art"] obtenue
+image:felix-le-chat-filtres-couleurs.png[]
+
+==== Filtrage matriciel : le filtre médian
+
+Un https://fr.wikipedia.org/wiki/Filtre_m%C3%A9dian[filtre médian] est très efficace pour enlever un bruit impulsif (sous forme de parasites isolés) qui peuvent avoir une amplitude très grande. Il permet de supprimer le bruit sans altérer les détails de l'image.
+
+L'idée principale du filtre médian est de remplacer chaque entrée par la valeur médiane de son voisinage. 
+
+.Extrait de l'article http://blog.kleinproject.org/?p=719&lang=fr[Matrices et Images Numériques] d'http://blog.kleinproject.org/?author=20&lang=fr[Antoine Nectoux]
+image:app_mascara_en.png[]
+
+[NOTE]
+====
+Le filtre médian permet d'éliminer les valeurs aberrantes (ici la valeur `200`) sans se limiter à faire un calcul de moyenne qui aura tendance à contaminer les valeurs voisines avec cette valeur aberrante et flouter l'image.
+====
+
+Les images de https://fr.wikipedia.org/wiki/Lenna[Lenna] avec du bruit : http://agamenon.tsc.uah.es/Investigacion/gram/papers/Noise/Images/lenna/
+
+.Lenna avec du "bruit"
+image:lenna_10.jpeg[]
+
+[source,python]
+----
+include::activite3/activite3d.py[]
+----
+
+.Lenna avec un filtre médian de réduction du bruit
+image:lenna_10-filtre-median.jpeg[]
+
+==== Bibliothèque PIL (_Python Imaging Library_)
+
+Les opérations précédentes peuvent être réalisées directement avec la bibliothèque PIL (_Python Imaging Library_) !
+
+La fonction `transpose()` permet de retourner ou faire pivoter par incréments de 90 degrés une image :
+
+[source,python]
+----
+from PIL import Image
+
+im = Image.open("image.jpg")
+
+# Retourner l'image de gauche à droite
+im_flipped = im.transpose(method=Image.FLIP_LEFT_RIGHT)
+
+# autres : Image.FLIP_TOP_BOTTOM, Image.ROTATE_90, Image.ROTATE_180, Image.ROTATE_270, Image.TRANSPOSE ou Image.TRANSVERSE
+----
+
+D'autre part, le https://pillow.readthedocs.io/en/stable/reference/ImageFilter.html[module ImageFilter] fournit un ensemble suivant de filtres d'amélioration d'image prédéfinis;
+
+La méthode `Image.filter()` :
+
+[source,python]
+----
+from PIL import Image, ImageFilter
+
+im = Image.open("image.jpg")
+
+im1 = im.filter(ImageFilter.BLUR)
+
+im_blurred = im.filter(ImageFilter.GaussianBlur(radius=5))
+im_blurred.show()
+
+# Filtre médian
+im2 = im.filter(ImageFilter.MedianFilter(3)) # 3 x 3
+im2.show()
+
+# autres : CONTOUR, DETAIL, EDGE_ENHANCE, EDGE_ENHANCE_MORE, EMBOSS, FIND_EDGES, SHARPEN, SMOOTH et SMOOTH_MORE
+----
+
+==== Voir aussi
+
+- Les filtres par convolution, passe-haut et passe-bas et la détection de contours : http://www.tangentex.com/TraitementImages.htm[Filtrage et traitement d'images (TangenteX.com)]
+- La détection de Canny Edge et les filtres gaussien et Sobel : https://ichi.pro/fr/implementez-la-detection-canny-edge-a-partir-de-zero-avec-pytorch-177901029133293[ichi.pro/fr/]
+
+Codes sources des exemples : link:https://github.com/tvaira/python-traitement-images[https://github.com/tvaira/python-traitement-images].
+
+***
+
+Site : {home}[tvaira.free.fr]
